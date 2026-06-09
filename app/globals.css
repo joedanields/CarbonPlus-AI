@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cyber-bg: #0a0a0c;
+  --color-cyber-cyan: #00f0ff;
+  --color-cyber-purple: #ff00ff;
+  --background-image-cyberGrid: linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+}
+
+@layer utilities {
+  .cyber-card {
+    @apply bg-cyber-bg relative z-10;
+  }
+  .glow-cyan {
+    text-shadow: 0 0 5px rgba(0,240,255,0.8), 0 0 10px rgba(0,240,255,0.5);
+  }
+  .glow-purple {
+    text-shadow: 0 0 5px rgba(255,0,255,0.8), 0 0 10px rgba(255,0,255,0.5);
+  }
+  .neon-text {
+    @apply text-white;
+  }
+}
