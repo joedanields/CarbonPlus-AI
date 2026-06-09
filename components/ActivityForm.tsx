@@ -2,10 +2,13 @@
 
 import React, { useState, FormEvent } from "react";
 
+type TransportMode = "Walk" | "Cycle" | "Bus" | "Train" | "Car" | "Bike";
+type DietType = "Vegan" | "Vegetarian" | "Mixed" | "High Meat";
+
 export default function ActivityForm() {
-  const [transportMode, setTransportMode] = useState<string>("Walk");
+  const [transportMode, setTransportMode] = useState<TransportMode>("Walk");
   const [distance, setDistance] = useState<number | "">("");
-  const [dietType, setDietType] = useState<string>("Mixed");
+  const [dietType, setDietType] = useState<DietType>("Mixed");
   const [homeEnergy, setHomeEnergy] = useState<number | "">("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>("");
@@ -56,7 +59,7 @@ export default function ActivityForm() {
           <select
             id="transportMode"
             value={transportMode}
-            onChange={(e) => setTransportMode(e.target.value)}
+            onChange={(e) => setTransportMode(e.target.value as TransportMode)}
             className="p-3 bg-black border border-cyber-cyan text-white rounded focus:outline-none focus:border-cyber-cyan focus:ring-1 focus:ring-cyber-cyan transition-shadow glow-cyan appearance-none"
             required
           >
@@ -91,7 +94,7 @@ export default function ActivityForm() {
           <select
             id="dietType"
             value={dietType}
-            onChange={(e) => setDietType(e.target.value)}
+            onChange={(e) => setDietType(e.target.value as DietType)}
             className="p-3 bg-black border border-cyber-purple text-white rounded focus:outline-none focus:border-cyber-purple focus:ring-1 focus:ring-cyber-purple transition-shadow glow-purple appearance-none"
             required
           >
