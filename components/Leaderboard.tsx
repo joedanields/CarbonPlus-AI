@@ -1,7 +1,15 @@
 import React from "react";
 
+interface LeaderboardUser {
+  rank: number;
+  name: string;
+  level: number;
+  streak: number;
+  ecoPoints: number;
+}
+
 // Mock data to render
-const LEADERBOARD_DATA = [
+const LEADERBOARD_DATA: LeaderboardUser[] = [
   { rank: 1, name: "NeoEco", level: 42, streak: 12, ecoPoints: 15420 },
   { rank: 2, name: "TrinityGreen", level: 38, streak: 8, ecoPoints: 12350 },
   { rank: 3, name: "MorpheusSustains", level: 35, streak: 5, ecoPoints: 11200 },

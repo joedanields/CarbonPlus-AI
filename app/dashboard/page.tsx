@@ -93,7 +93,7 @@ function AICoachBanner() {
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-cyberGrid bg-black text-white p-6 font-sans">
+    <div className="min-h-screen bg-[image:var(--background-image-cyberGrid)] bg-black text-white p-6 font-sans">
 
       {/* Top Banner */}
       <header className="mb-8 border-b-2 border-cyber-cyan pb-4 flex items-center justify-center lg:justify-start">
