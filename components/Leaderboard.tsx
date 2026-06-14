@@ -1,4 +1,13 @@
+"use client";
+
 import React from "react";
+
+/**
+ * Leaderboard — Community Rankings Panel
+ *
+ * Displays a mock community leaderboard showing eco-points rankings.
+ * Restyled to match the CarbonPulse design system (panel, eyebrow, brand colors).
+ */
 
 interface LeaderboardUser {
   rank: number;
@@ -8,7 +17,6 @@ interface LeaderboardUser {
   ecoPoints: number;
 }
 
-// Mock data to render
 const LEADERBOARD_DATA: LeaderboardUser[] = [
   { rank: 1, name: "NeoEco", level: 42, streak: 12, ecoPoints: 15420 },
   { rank: 2, name: "TrinityGreen", level: 38, streak: 8, ecoPoints: 12350 },
@@ -17,41 +25,69 @@ const LEADERBOARD_DATA: LeaderboardUser[] = [
   { rank: 5, name: "SwitchOn", level: 24, streak: 0, ecoPoints: 6500 },
 ];
 
-export default function Leaderboard() {
-  return (
-    <div className="cyber-card p-6 border-2 border-cyber-purple rounded-xl bg-cyber-bg text-white shadow-[0_0_15px_rgba(255,0,255,0.2)]">
-      <h2 className="text-2xl mb-6 font-bold neon-text glow-purple uppercase tracking-widest border-b border-cyber-purple pb-2">
-        Network Rankings
-      </h2>
+interface LeaderboardProps {
+  /** Current user's total eco points (to highlight their standing). */
+  userPoints: number;
+}
 
-      <div className="flex flex-col space-y-3">
+function LeaderboardInner({ userPoints }: LeaderboardProps) {
+  // Find where the user would rank
+  const userRank =
+    LEADERBOARD_DATA.filter((u) => u.ecoPoints > userPoints).length + 1;
+
+  return (
+    <section
+      className="panel p-5 sm:p-6"
+      aria-labelledby="leaderboard-heading"
+    >
+      <div className="mb-5">
+        <p className="eyebrow">Community</p>
+        <h2
+          id="leaderboard-heading"
+          className="mt-1 text-xl font-semibold text-white"
+        >
+          Network Rankings
+        </h2>
+        <p className="mt-1 text-xs text-slate-500">
+          Your rank: #{userRank} with {userPoints.toLocaleString()} EP
+        </p>
+      </div>
+
+      <div
+        className="flex flex-col space-y-2"
+        role="list"
+        aria-label="Leaderboard rankings"
+      >
         {LEADERBOARD_DATA.map((user) => {
           const isTopRank = user.rank === 1;
 
           return (
             <div
               key={user.rank}
-              className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-300 ${
+              role="listitem"
+              className={`flex items-center justify-between rounded-lg border p-3 transition-all duration-200 ${
                 isTopRank
-                  ? "border-cyber-cyan bg-black shadow-[0_0_15px_rgba(0,255,255,0.4)] z-10 scale-[1.02]"
-                  : "border-gray-800 bg-gray-900/50 hover:border-gray-600"
+                  ? "border-pulse/40 bg-pulse/5 shadow-[0_0_12px_rgba(66,232,165,0.15)]"
+                  : "border-white/8 bg-white/[0.02] hover:border-white/15"
               }`}
             >
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center gap-3">
                 {/* Rank Badge */}
                 <span
-                  className={`font-bold w-8 text-center ${
-                    isTopRank ? "text-cyber-cyan glow-cyan text-xl" : "text-gray-400"
+                  className={`w-8 text-center font-bold ${
+                    isTopRank ? "text-pulse text-lg" : "text-slate-500"
                   }`}
+                  aria-label={`Rank ${user.rank}`}
                 >
                   #{user.rank}
                 </span>
 
-                {/* Inline SVG Avatar Placeholder */}
+                {/* Avatar Placeholder */}
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                    isTopRank ? "border-cyber-cyan" : "border-gray-600"
+                  className={`flex h-9 w-9 items-center justify-center rounded-full border-2 ${
+                    isTopRank ? "border-pulse" : "border-white/15"
                   }`}
+                  aria-hidden="true"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -61,7 +97,9 @@ export default function Leaderboard() {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`w-5 h-5 ${isTopRank ? "text-cyber-cyan" : "text-gray-400"}`}
+                    className={`h-4 w-4 ${
+                      isTopRank ? "text-pulse" : "text-slate-500"
+                    }`}
                   >
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
@@ -71,21 +109,22 @@ export default function Leaderboard() {
                 {/* User Info */}
                 <div className="flex flex-col">
                   <span
-                    className={`font-semibold tracking-wide ${
-                      isTopRank ? "text-cyber-cyan glow-cyan" : "text-white"
+                    className={`text-sm font-semibold tracking-wide ${
+                      isTopRank ? "text-pulse" : "text-white"
                     }`}
                   >
                     {user.name}
                   </span>
-                  <div className="flex items-center space-x-2 text-xs text-gray-400 mt-1">
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
                     <span>Lv.{user.level}</span>
-                    <span>•</span>
-                    <span className="flex items-center text-cyber-purple">
+                    <span aria-hidden="true">·</span>
+                    <span className="flex items-center text-pulse/70">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        className="w-3 h-3 mr-1"
+                        className="mr-0.5 h-3 w-3"
+                        aria-hidden="true"
                       >
                         <path
                           fillRule="evenodd"
@@ -101,16 +140,25 @@ export default function Leaderboard() {
 
               {/* Eco Points */}
               <div
-                className={`font-mono text-sm sm:text-base text-right font-bold tracking-wider ${
-                  isTopRank ? "text-cyber-cyan glow-cyan" : "text-gray-300"
+                className={`text-right text-sm font-bold tracking-wider ${
+                  isTopRank ? "text-pulse" : "text-slate-300"
                 }`}
               >
-                {user.ecoPoints.toLocaleString()} <span className="text-xs font-normal text-gray-500">EP</span>
+                {user.ecoPoints.toLocaleString()}{" "}
+                <span className="text-[10px] font-normal text-slate-500">
+                  EP
+                </span>
               </div>
             </div>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
+
+/** Memoized leaderboard — only re-renders when user points change. */
+const Leaderboard = React.memo(LeaderboardInner);
+Leaderboard.displayName = "Leaderboard";
+
+export default Leaderboard;
