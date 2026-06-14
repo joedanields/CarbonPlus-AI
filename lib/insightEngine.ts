@@ -1,174 +1,217 @@
 /**
- * CarbonPulse AI — Behavioral Nudge Engine
+ * CarbonPulse AI — Behavioral Insight Engine 2.0
  *
- * Evaluates the last 3 days of user activity telemetry and emits a single,
- * contextually relevant behavioral nudge using Fogg's B=MAP model.
- *
- * Psychological frameworks: Nudge Theory (Thaler & Sunstein),
- * Fogg Behavior Model, and the micro-action matrix from the blueprint.
- * Zero external dependencies.
+ * Transforms carbon telemetry into high-impact behavioral nudges using
+ * longitudinal pattern analysis, relatable equivalencies, and persona-based framing.
  */
 
 import type {
   RecentLog,
   BehavioralNudge,
   TransportMode,
+  UserPersona,
+  ActivityLog,
 } from "./types";
 import {
   DIET_FACTORS_KG_DAY,
   TRANSPORT_FACTORS_KG_KM,
 } from "./constants";
+import { analyzeCarbonTrends, CarbonTrend } from "./patternAnalyzer";
+import { getRelatableEquivalency } from "./equivalencies";
 
-// ─── Core Nudge Engine ────────────────────────────────────────────────────────
+// ─── Persona Templates ────────────────────────────────────────────────────────────
 
-/**
- * Evaluates up to the last 3 activity logs and returns the single highest-
- * priority nudge. Returns `null` if no trigger condition is met.
- *
- * Priority order (first match wins):
- *   1. Consecutive high-meat logging → "Meatless Monday" challenge
- *   2. Repeated short car trips → subway substitution
- *   3. Any car usage with available greener mode → transit default-bias nudge
- *
- * @param recentLogs - Array of the user's most recent activity logs (newest first)
- */
+type Template = {
+  headline: string;
+  message: string;
+  framework: string;
+};
+
+const PERSONA_FRAMES: Record<UserPersona, Record<string, Template>> = {
+  competitive: {
+    trend_down: {
+      headline: "🚀 Speeding Towards Zero",
+      message: (v: string, eq: string) => `Your footprint is down ${v}. You're outperforming your previous self by ${eq}. Keep the streak alive!`,
+      framework: "GAMIFICATION",
+    },
+    leakage: {
+      headline: "⚠️ Efficiency Leak Detected",
+      message: (v: string, eq: string) => `You're winning on transport, but losing ground on diet. Plug the leak to maximize your score.`,
+      framework: "LOSS_AVERSION",
+    },
+    default: {
+      headline: "Level Up Your Impact",
+      message: (v: string, eq: string) => `A simple change today could save ${eq}. Ready to beat your best?`,
+      framework: "SALIENCE",
+    },
+  },
+  analytical: {
+    trend_down: {
+      headline: "📉 Statistical Improvement",
+      message: (v: string, eq: string) => `Average emissions decreased by ${v}. This represents a tangible saving of ${eq} relative to last week.`,
+      framework: "SALIENCE",
+    },
+    leakage: {
+      headline: "📊 Imbalance Warning",
+      message: (v: string, eq: string) => `Data shows an inverse correlation between transport and diet. Recalibrate both to optimize reduction.`,
+      framework: "SALIENCE",
+    },
+    default: {
+      headline: "Data-Driven Optimization",
+      message: (v: string, eq: string) => `Current metrics suggest that optimizing your primary source could save ${eq}.`,
+      framework: "SALIENCE",
+    },
+  },
+  sensitive: {
+    trend_down: {
+      headline: "🌿 A Lighter Footprint",
+      message: (v: string, eq: string) => `You're creating a gentler impact on the planet, reducing your load by ${v}. That's like ${eq} for nature.`,
+      framework: "COMMITMENT_CONSISTENCY",
+    },
+    leakage: {
+      headline: "🌍 Holistic Balance",
+      message: (v: string, eq: string) => `While your travel is greener, your diet is heavier. A balanced approach helps the earth most.`,
+      framework: "SALIENCE",
+    },
+    default: {
+      headline: "A Small Act of Kindness",
+      message: (v: string, eq: string) => `By making one small shift today, you could save ${eq}. Every bit counts.`,
+      framework: "COMMITMENT_CONSISTENCY",
+    },
+  },
+  pragmatic: {
+    trend_down: {
+      headline: "✅ Efficient Progress",
+      message: (v: string, eq: string) => `Your footprint is down ${v}. This is a practical win, equivalent to ${eq}.`,
+      framework: "SALIENCE",
+    },
+    leakage: {
+      headline: "🔄 Trade-off Alert",
+      message: (v: string, eq: string) => `You've swapped car trips for more meat. The net gain is minimal. Focus on both for real results.`,
+      framework: "SALIENCE",
+    },
+    default: {
+      headline: "Quick Win Available",
+      message: (v: string, eq: string) => `A simple shift in your routine today could save ${eq}. It's a low-effort, high-impact move.`,
+      framework: "SALIENCE",
+    },
+  },
+};
+
+// ─── Core Nudge Engine ───────────────────────────────────────────────────────────
+
 export function generateDailyNudge(
-  recentLogs: RecentLog[]
+  logs: ActivityLog[],
+  persona: UserPersona = "pragmatic"
 ): BehavioralNudge | null {
-  const logs = recentLogs.slice(0, 3);
-
   if (logs.length === 0) return null;
 
-  // ── Trigger 1: Consecutive High-Meat Days ─────────────────────────────────
-  const meatlessNudge = evaluateMeatlessMonday(logs);
-  if (meatlessNudge) return meatlessNudge;
+  const trend = analyzeCarbonTrends(logs);
+  const lastLog = logs[logs.length - 1];
+  const savingsValue = lastLog.carbonSavedKg;
+  const equivalency = getRelatableEquivalency(savingsValue);
 
-  // ── Trigger 2: Repeated Short Car Trips (< 15 km) ─────────────────────────
-  const subwayNudge = evaluateSubwaySubstitution(logs);
-  if (subwayNudge) return subwayNudge;
+  // 1. Priority: Long-term Patterns (Leakage / Trend)
+  if (trend.leakageDetected) {
+    const frame = PERSONA_FRAMES[persona].leakage;
+    return {
+      id: "nudge_leakage",
+      headline: frame.headline,
+      message: frame.message("", equivalency),
+      framework: frame.framework as any,
+      potentialSavingsKg: 0,
+      triggerContext: { trend },
+    };
+  }
 
-  // ── Trigger 3: Any Car Usage → Bus Transit Default ────────────────────────
-  const transitNudge = evaluateBusTransitDefault(logs);
-  if (transitNudge) return transitNudge;
+  if (trend.isImproving) {
+    const frame = PERSONA_FRAMES[persona].trend_down;
+    return {
+      id: "nudge_trend_down",
+      headline: frame.headline,
+      message: frame.message(`${Math.abs(trend.velocity)}%`, equivalency),
+      framework: frame.framework as any,
+      potentialSavingsKg: 0,
+      triggerContext: { trend },
+    };
+  }
 
-  return null;
+  // 2. Secondary: Short-term behavioral triggers (from original engine)
+  const recent = logs.slice(-3).reverse();
+  const meatless = evaluateMeatlessMonday(recent);
+  if (meatless) return adaptToPersona(meatless, persona);
+
+  const subway = evaluateSubwaySubstitution(recent);
+  if (subway) return adaptToPersona(subway, persona);
+
+  const transit = evaluateBusTransitDefault(recent);
+  if (transit) return adaptToPersona(transit, persona);
+
+  // 3. Tertiary: Default nudge
+  const frame = PERSONA_FRAMES[persona].default;
+  return {
+    id: "nudge_default",
+    headline: frame.headline,
+    message: frame.message("", equivalency),
+    framework: frame.framework as any,
+    potentialSavingsKg: 0,
+    triggerContext: {},
+  };
 }
 
-// ─── Trigger Evaluators ───────────────────────────────────────────────────────
+function adaptToPersona(nudge: BehavioralNudge, persona: UserPersona): BehavioralNudge {
+  // Simplified persona adaptation for short-term nudges
+  const prefix = {
+    competitive: "Challenge: ",
+    analytical: "Insight: ",
+    sensitive: "Invitation: ",
+    pragmatic: "Quick Win: ",
+  };
+  return {
+    ...nudge,
+    headline: `${prefix[persona]}${nudge.headline}`,
+  };
+}
 
-/**
- * TRIGGER 1 — "Meatless Monday" Challenge
- * Framework: Gamification + Commitment Consistency
- *
- * Fires when the user has logged `high_meat` for 2+ of the last 3 days.
- * Savings = high_meat daily factor − vegan daily factor (4.30 kg CO2e/day).
- */
-function evaluateMeatlessMonday(logs: RecentLog[]): BehavioralNudge | null {
+// ─── Original Evaluators (Preserved and Adapted) ──────────────────────────────────
+
+function evaluateMeatlessMonday(logs: any[]): BehavioralNudge | null {
   const highMeatDays = logs.filter((l) => l.diet === "high_meat").length;
-
   if (highMeatDays < 2) return null;
-
-  const savingsKg = roundTo2(DIET_FACTORS_KG_DAY.high_meat - DIET_FACTORS_KG_DAY.vegan);
-
   return {
     id: "nudge_meatless_monday",
     headline: "Meatless Monday — Unlock a Carbon Badge",
-    message:
-      `You've logged a high-meat diet ${highMeatDays} days in a row. ` +
-      `Swapping tomorrow's meals to plant-based could save you ${savingsKg} kg CO2e — ` +
-      `enough to completely offset your last car commute. ` +
-      `Complete the challenge and earn +50 bonus points.`,
+    message: `You've logged a high-meat diet ${highMeatDays} days in a row. Swapping to plant-based could save you 4.3kg CO2e.`,
     framework: "GAMIFICATION",
-    potentialSavingsKg: savingsKg,
-    triggerContext: { highMeatDays, logsEvaluated: logs.length },
+    potentialSavingsKg: 4.3,
+    triggerContext: { highMeatDays },
   };
 }
 
-/**
- * TRIGGER 2 — Subway Substitution (Short Car Trips)
- * Framework: Salience / Choice Architecture
- *
- * Fires when at least 2 of the last 3 logs show a car trip under 15 km.
- * Savings per trip = distance × (car EF − train EF).
- */
-function evaluateSubwaySubstitution(logs: RecentLog[]): BehavioralNudge | null {
-  const shortCarTrips = logs.filter(
-    (l) => l.transport.mode === "car" && l.transport.distanceKm < 15
-  );
-
+function evaluateSubwaySubstitution(logs: any[]): BehavioralNudge | null {
+  const shortCarTrips = logs.filter((l) => l.transport.mode === "car" && l.transport.distanceKm < 15);
   if (shortCarTrips.length < 2) return null;
-
   const latestTrip = shortCarTrips[0];
-  if (!latestTrip) return null;
-
-  const savingsKg = roundTo2(
-    latestTrip.transport.distanceKm *
-      (TRANSPORT_FACTORS_KG_KM.car - TRANSPORT_FACTORS_KG_KM.train)
-  );
-  const avgDistanceKm = roundTo2(
-    shortCarTrips.reduce((sum, l) => sum + l.transport.distanceKm, 0) /
-      shortCarTrips.length
-  );
-
   return {
     id: "nudge_subway_substitution",
     headline: "Switch Lanes — Your Commute Carbon Is Stacking Up",
-    message:
-      `You've driven ${shortCarTrips.length} short trips (avg ${avgDistanceKm} km) this week. ` +
-      `Taking the subway instead of your car on a ${latestTrip.transport.distanceKm} km route ` +
-      `avoids ${savingsKg} kg CO2e — that's enough energy to charge a smartphone every day for a year.`,
+    message: `You've driven ${shortCarTrips.length} short trips this week. Subway substitution on a ${latestTrip.transport.distanceKm}km route avoids significant CO2.`,
     framework: "SALIENCE",
-    potentialSavingsKg: savingsKg,
-    triggerContext: {
-      shortCarTripCount: shortCarTrips.length,
-      avgDistanceKm,
-      latestDistanceKm: latestTrip.transport.distanceKm,
-    },
+    potentialSavingsKg: 1.0,
+    triggerContext: { shortCarTripCount: shortCarTrips.length },
   };
 }
 
-/**
- * TRIGGER 3 — Bus Transit Default Bias
- * Framework: Default Bias
- *
- * Fires when any log shows car usage and no greener mode in the same window.
- * Savings = 10 km × (car EF − bus EF) = 0.80 kg CO2e.
- */
-function evaluateBusTransitDefault(logs: RecentLog[]): BehavioralNudge | null {
+function evaluateBusTransitDefault(logs: any[]): BehavioralNudge | null {
   const hasCarUsage = logs.some((l) => l.transport.mode === "car");
-  const greenModes: TransportMode[] = ["train", "bus", "walk", "cycle"];
-  const hasGreenMode = logs.some((l) =>
-    greenModes.includes(l.transport.mode)
-  );
-
+  const hasGreenMode = logs.some((l) => ["train", "bus", "walk", "cycle"].includes(l.transport.mode));
   if (!hasCarUsage || hasGreenMode) return null;
-
-  const REFERENCE_DISTANCE_KM = 10;
-  const savingsKg = roundTo2(
-    REFERENCE_DISTANCE_KM *
-      (TRANSPORT_FACTORS_KG_KM.car - TRANSPORT_FACTORS_KG_KM.bus)
-  );
-
   return {
     id: "nudge_bus_transit_default",
-    headline: "Make Transit Your Default — Cut 40% Off Your Commute Footprint",
-    message:
-      `All of your recent trips have been by car. ` +
-      `Choosing the bus for a ${REFERENCE_DISTANCE_KM} km route cuts your transit ` +
-      `carbon footprint by nearly 40%, saving ${savingsKg} kg CO2e per trip. ` +
-      `Set transit as your default and watch your streak climb.`,
+    headline: "Make Transit Your Default",
+    message: "All of your recent trips have been by car. Choosing the bus cuts your transit footprint by nearly 40%.",
     framework: "DEFAULT_BIAS",
-    potentialSavingsKg: savingsKg,
-    triggerContext: {
-      exclusiveCarDays: logs.filter((l) => l.transport.mode === "car").length,
-      referenceDistanceKm: REFERENCE_DISTANCE_KM,
-    },
+    potentialSavingsKg: 0.8,
+    triggerContext: { exclusiveCarDays: logs.filter(l => l.transport.mode === "car").length },
   };
-}
-
-// ─── Utility ──────────────────────────────────────────────────────────────────
-
-/** Rounds a float to 2 decimal places. */
-function roundTo2(value: number): number {
-  return Math.round(value * 100) / 100;
 }

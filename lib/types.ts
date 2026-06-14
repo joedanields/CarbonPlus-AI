@@ -163,10 +163,56 @@ export interface WeeklyCoachData {
   weeklyBaselineKg: number;
 }
 
+// ─── User Persona ────────────────────────────────────────────────────────────
+
+/** Behavioral profile that determines the tone and framing of AI nudges. */
+export type UserPersona = "competitive" | "analytical" | "sensitive" | "pragmatic";
+
+/** Map of persona labels for the onboarding quiz. */
+export const PERSONA_LABELS: Record<UserPersona, string> = {
+  competitive: "The Achiever",
+  analytical: "The Data Scientist",
+  sensitive: "The Eco-Guardian",
+  pragmatic: "The Efficiency Expert",
+} as const;
+
+// ─── Missions & Rewards ──────────────────────────────────────────────────────────
+
+/** A behavioral challenge a user can commit to. */
+export interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  criteria: (logs: ActivityLog[]) => number; // Returns progress from 0.0 to 1.0
+  rewardPoints: number;
+  badgeId: string;
+  durationDays: number;
+}
+
+/** A reward earned by completing a mission. */
+export interface Badge {
+  id: string;
+  name: string;
+  icon: string;
+  unlockedAt: string;
+}
+
+/** State of a user's current engagement with missions. */
+export interface MissionState {
+  activeMissionId: string | null;
+  startedAt: string | null;
+  completedMissionIds: string[];
+}
+
 // ─── User Settings ────────────────────────────────────────────────────────────
 
-/** Persisted user settings including customizable daily target. */
+/** Persisted user settings including customizable daily target and persona. */
 export interface UserSettings {
   dailyTargetKg: number;
   weeklyTargetKg: number;
+  persona: UserPersona;
+  onboardingCompleted: boolean;
+  missionState: MissionState;
+  unlockedBadges: string[];
 }
+
