@@ -16,7 +16,7 @@ const TRANSPORT_FACTORS_KG_KM: Record<string, number> = {
   car:   0.21, // Average petrol/diesel — DEFRA 2024/2025
   bus:   0.13, // Post-COVID occupancy-adjusted — DEFRA 2024/2025
   train: 0.02, // Electrified metro/light rail — DEFRA 2024/2025
-  bike:  0.00, // Motorbike — treated as 0 here; override if needed
+  bike:  0.11, // Average motorbike estimate
 } as const;
 
 /** kg CO2e per day — Scarborough et al. (2014), normalised to 2,000 kcal */
@@ -95,21 +95,33 @@ export function processActivity(input: ActivityInput): ProcessedActivity {
   } = input;
 
   // ── 1. Transport emissions ─────────────────────────────────────────────────
+  const safeDistanceKm = Math.max(
+    0,
+    Number.isFinite(transport.distanceKm) ? transport.distanceKm : 0
+  );
+  const safeHomeEnergyKwh = Math.max(
+    0,
+    Number.isFinite(homeEnergyKwh) ? homeEnergyKwh : 0
+  );
+  const safeBaseline = Math.max(
+    0,
+    Number.isFinite(baselineFootprint) ? baselineFootprint : 0
+  );
   const modeKey = transport.mode.toLowerCase();
   const efMode = TRANSPORT_FACTORS_KG_KM[modeKey] ?? 0.21; // default to car if unknown
-  const transportEmissionsKg = roundTo4(transport.distanceKm * efMode);
+  const transportEmissionsKg = roundTo4(safeDistanceKm * efMode);
 
   // ── 2. Diet emissions ──────────────────────────────────────────────────────
   const dietEmissionsKg = roundTo4(DIET_FACTORS_KG_DAY[diet] ?? DIET_FACTORS_KG_DAY.mixed);
 
   // ── 3. Home energy emissions (E_elec = C_kWh × EF_grid) ───────────────────
-  const homeEnergyEmissionsKg = roundTo4(homeEnergyKwh * gridIntensityKgPerKwh);
+  const homeEnergyEmissionsKg = roundTo4(safeHomeEnergyKwh * gridIntensityKgPerKwh);
 
   // ── 4. Totals and delta ────────────────────────────────────────────────────
   const totalEmissionsKg = roundTo4(
     transportEmissionsKg + dietEmissionsKg + homeEnergyEmissionsKg
   );
-  const carbonDeltaKg = roundTo4(totalEmissionsKg - baselineFootprint);
+  const carbonDeltaKg = roundTo4(totalEmissionsKg - safeBaseline);
   const carbonSavedKg = carbonDeltaKg < 0 ? roundTo4(Math.abs(carbonDeltaKg)) : 0;
 
   // ── 5. Breakdown for SVG donut chart ──────────────────────────────────────

@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "CarbonPulse AI",
-  description: "Sustainability Operating System",
+  title: "CarbonPulse | Personal carbon tracker",
+  description: "Understand, track, and reduce your carbon footprint through simple daily actions.",
 };
 
 export default function RootLayout({
