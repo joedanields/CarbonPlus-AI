@@ -1,23 +1,124 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cyber-bg: #0a0a0c;
-  --color-cyber-cyan: #00f0ff;
-  --color-cyber-purple: #ff00ff;
-  --background-image-cyberGrid: linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+  --color-pulse: #42e8a5;
 }
 
-@layer utilities {
-  .cyber-card {
-    @apply bg-cyber-bg relative z-10;
-  }
-  .glow-cyan {
-    text-shadow: 0 0 5px rgba(0,240,255,0.8), 0 0 10px rgba(0,240,255,0.5);
-  }
-  .glow-purple {
-    text-shadow: 0 0 5px rgba(255,0,255,0.8), 0 0 10px rgba(255,0,255,0.5);
-  }
-  .neon-text {
-    @apply text-white;
-  }
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #07100e; color: #e8f0ee; }
+button, input, select { font: inherit; }
+
+.bg-grid {
+  background-color: #07100e;
+  background-image:
+    radial-gradient(circle at 76% 4%, rgba(66, 232, 165, 0.08), transparent 28rem),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: auto, 42px 42px, 42px 42px;
+}
+
+.panel {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 1.1rem;
+  background: rgba(13, 25, 22, 0.9);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
+}
+
+.panel-accent {
+  border-color: rgba(66, 232, 165, 0.24);
+  background: linear-gradient(145deg, rgba(66, 232, 165, 0.055), transparent 45%), rgba(13, 25, 22, 0.92);
+}
+
+.insight-panel {
+  background: radial-gradient(circle at 100% 0%, rgba(140, 180, 255, 0.12), transparent 45%), rgba(13, 25, 22, 0.92);
+}
+
+.brand-mark {
+  display: grid;
+  height: 2.5rem;
+  width: 2.5rem;
+  place-items: center;
+  border: 1px solid rgba(66, 232, 165, 0.4);
+  border-radius: 0.8rem;
+  color: #42e8a5;
+  background: rgba(66, 232, 165, 0.08);
+}
+
+.eyebrow {
+  color: #42e8a5;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  padding: 0.4rem 0.65rem;
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 0.7rem;
+}
+
+.mini-stat { min-width: 0; border-left: 1px solid rgba(255, 255, 255, 0.1); padding-left: 0.8rem; }
+.mini-stat span, .mini-stat small { display: block; overflow: hidden; color: #64748b; font-size: 0.65rem; text-overflow: ellipsis; white-space: nowrap; }
+.mini-stat strong { display: block; margin: 0.15rem 0; color: #f8fafc; font-size: 1.35rem; font-weight: 600; }
+
+.field-label { display: flex; flex-direction: column; gap: 0.45rem; color: #a8b6b2; font-size: 0.75rem; font-weight: 600; }
+.field-control {
+  width: 100%;
+  min-height: 2.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.7rem;
+  outline: none;
+  padding: 0.7rem 0.8rem;
+  color: #f8fafc;
+  background: rgba(3, 8, 7, 0.7);
+  transition: border-color 160ms, box-shadow 160ms;
+}
+.field-control:focus { border-color: rgba(66, 232, 165, 0.7); box-shadow: 0 0 0 3px rgba(66, 232, 165, 0.1); }
+.field-with-unit { position: relative; }
+.field-with-unit > span { position: absolute; right: 0.8rem; top: 50%; color: #64748b; font-size: 0.7rem; transform: translateY(-50%); }
+
+.primary-button, .secondary-button {
+  display: inline-flex;
+  min-height: 2.85rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: transform 160ms, opacity 160ms;
+}
+.primary-button { border: 1px solid #42e8a5; color: #06100d; background: #42e8a5; }
+.secondary-button { border: 1px solid rgba(66, 232, 165, 0.35); color: #77efbd; background: rgba(66, 232, 165, 0.07); }
+.primary-button:hover, .secondary-button:hover:not(:disabled) { transform: translateY(-1px); }
+.secondary-button:disabled { cursor: default; opacity: 0.55; }
+
+.empty-state {
+  display: flex;
+  min-height: 11rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 0.9rem;
+  padding: 1.5rem;
+  color: #64748b;
+  text-align: center;
+  font-size: 0.82rem;
+}
+.empty-icon { display: grid; height: 2.6rem; width: 2.6rem; place-items: center; border-radius: 999px; color: #42e8a5; background: rgba(66, 232, 165, 0.08); font-size: 0.9rem; }
+
+@media (max-width: 520px) {
+  .mini-stat strong { font-size: 1.1rem; }
 }
