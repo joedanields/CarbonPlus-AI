@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import ActivityForm from "../../components/ActivityForm";
 import FootprintRing from "../../components/FootprintRing";
 import TrendChart from "../../components/TrendChart";
 import Leaderboard from "../../components/Leaderboard";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import MissionProgress from "../../components/MissionProgress";
 import { processActivity } from "../../lib/activityProcessing";
 import { generateDailyNudge } from "../../lib/insightEngine";
 import { loadActivityLogs, saveActivityLogs, clearActivityLogs, loadUserSettings, saveUserSettings } from "../../lib/storage";
 import { downloadLogsAsCSV } from "../../lib/exportData";
 import { BENCHMARKS_KG_PER_DAY, DEFAULT_DAILY_BASELINE_KG, DEFAULT_WEEKLY_TARGET_KG, INPUT_LIMITS } from "../../lib/constants";
+import { updateMissionProgress, suggestNextMission } from "../../lib/missionManager";
 import type { ActivityLog, ActivityFormValues, RecentLog, UserSettings } from "../../lib/types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
