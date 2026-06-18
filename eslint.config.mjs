@@ -11,10 +11,10 @@ export default [
   ...new FlatCompat({
     baseDirectory: __dirname,
     resolvePluginsRelativeTo: __dirname,
-  }).extends([
-    "eslint-config-next/core-web-vitals",
-    "plugin:@typescript-eslint/recommended",
-  ]),
+  }).extends(
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended"
+  ),
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",

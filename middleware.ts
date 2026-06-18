@@ -47,6 +47,9 @@ export function middleware(_request: NextRequest): NextResponse {
   // ─── XSS Protection (legacy browsers) ────────────────────────────────────
   response.headers.set("X-XSS-Protection", "1; mode=block");
 
+  // ─── HTTP Strict Transport Security ──────────────────────────────────────
+  response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+
   return response;
 }
 

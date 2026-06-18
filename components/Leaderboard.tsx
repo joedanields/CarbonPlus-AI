@@ -42,12 +42,17 @@ function LeaderboardInner({ userPoints }: LeaderboardProps) {
     >
       <div className="mb-5">
         <p className="eyebrow">Community</p>
-        <h2
-          id="leaderboard-heading"
-          className="mt-1 text-xl font-semibold text-white"
-        >
-          Network Rankings
-        </h2>
+        <div className="flex items-center gap-2 mt-1">
+          <h2
+            id="leaderboard-heading"
+            className="text-xl font-semibold text-white"
+          >
+            Network Rankings
+          </h2>
+          <span className="rounded bg-pulse/10 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-pulse border border-pulse/20">
+            DEMO DATA
+          </span>
+        </div>
         <p className="mt-1 text-xs text-slate-500">
           Your rank: #{userRank} with {userPoints.toLocaleString()} EP
         </p>

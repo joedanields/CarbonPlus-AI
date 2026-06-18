@@ -7,7 +7,7 @@ CarbonPulse is a local-first personal carbon tracker designed to help individual
 - **Daily Tracking**: Log transport, food pattern, and home electricity use.
 - **Carbon Estimation**: Native TypeScript calculation engine based on DEFRA 2024/2025 and EPA data.
 - **Visual Insights**: Interactive category breakdown and 7-day footprint trend using optimized SVGs.
-- **Behavioral Nudges**: AI-driven nudges using Fogg's B=MAP model to encourage sustainable habits.
+- **Behavioral Nudges**: Rule-based nudges using Fogg's B=MAP model to encourage sustainable habits.
 - **Gamification**: Earn eco points for green choices and maintain streaks.
 - **Personalized Goals**: Set custom daily and weekly carbon budgets.
 - **Local-First**: All data is persisted in `localStorage`. No accounts, no API keys, no tracking.
@@ -16,7 +16,7 @@ CarbonPulse is a local-first personal carbon tracker designed to help individual
 ## 🛠️ Technical Architecture
  
 ### Core Stack
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 16 (App Router)
 - **Styling**: Tailwind CSS 4.0
 - **State & Persistence**: React hooks + Type-safe `localStorage` wrapper.
 - **Zero External Deps**: No heavy charting libraries or UI frameworks; all visualizations are native SVGs.

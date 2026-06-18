@@ -14,7 +14,8 @@ import { loadActivityLogs, saveActivityLogs, clearActivityLogs, loadUserSettings
 import { downloadLogsAsCSV } from "../../lib/exportData";
 import { BENCHMARKS_KG_PER_DAY, DEFAULT_DAILY_BASELINE_KG, DEFAULT_WEEKLY_TARGET_KG, INPUT_LIMITS } from "../../lib/constants";
 import { updateMissionProgress, suggestNextMission } from "../../lib/missionManager";
-import type { ActivityLog, ActivityFormValues, RecentLog, UserSettings } from "../../lib/types";
+import type { ActivityLog, ActivityFormValues, UserSettings } from "../../lib/types";
+import { AVAILABLE_MISSIONS } from "../../lib/missions";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,14 @@ export default function DashboardPage() {
   const [settings, setSettings] = useState<UserSettings>({
     dailyTargetKg: DEFAULT_DAILY_BASELINE_KG,
     weeklyTargetKg: DEFAULT_WEEKLY_TARGET_KG,
+    persona: "pragmatic",
+    onboardingCompleted: false,
+    missionState: {
+      activeMissionId: null,
+      startedAt: null,
+      completedMissionIds: [],
+    },
+    unlockedBadges: [],
   });
   const [editingTarget, setEditingTarget] = useState(false);
   const [targetInput, setTargetInput] = useState("");
@@ -98,24 +107,13 @@ export default function DashboardPage() {
   }, [latest, settings.dailyTargetKg]);
 
   // ── Nudge engine ────────────────────────────────────────────────────────
-  const recentLogs = useMemo<RecentLog[]>(
-    () =>
-      logs
-        .slice(-3)
-        .reverse()
-        .map((log) => ({
-          date: log.date,
-          transport: log.transport,
-          diet: log.diet,
-          totalCarbonSaved: log.carbonSavedKg,
-        })),
-    [logs]
-  );
-  const nudge = useMemo(() => generateDailyNudge(recentLogs), [recentLogs]);
+  const nudge = useMemo(() => generateDailyNudge(logs, settings.persona), [logs, settings.persona]);
 
-  const fallbackInsight = latest?.breakdown.reduce((largest, item) =>
-    item.valueKg > largest.valueKg ? item : largest
-  );
+  const fallbackInsight = latest?.breakdown && latest.breakdown.length > 0
+    ? latest.breakdown.reduce((largest, item) =>
+        item.valueKg > largest.valueKg ? item : largest
+      )
+    : undefined;
   const insightHeadline =
     nudge?.headline ??
     (fallbackInsight
@@ -128,34 +126,95 @@ export default function DashboardPage() {
       : "Add transport, food, and electricity data to get a personalized action for the next 24 hours.");
 
   // ── Handlers (memoized) ─────────────────────────────────────────────────
+  const currentStreak = useMemo(() => {
+    if (logs.length === 0) return 0;
+
+    // Sort logs by date descending
+    const sortedLogs = [...logs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let currentDateToCheck = new Date(today);
+
+    // Check if there is a log for today or yesterday to start the streak
+    const hasLogTodayOrYesterday = sortedLogs.some(log => {
+      const logDate = new Date(log.date);
+      logDate.setHours(0, 0, 0, 0);
+      const diffTime = Math.abs(today.getTime() - logDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays <= 1;
+    });
+
+    if (!hasLogTodayOrYesterday) return 0;
+
+    for (let i = 0; i < sortedLogs.length; i++) {
+      const logInfo = sortedLogs[i];
+      if (!logInfo) continue;
+
+      const logDate = new Date(logInfo.date);
+      logDate.setHours(0, 0, 0, 0);
+
+      const diffTime = Math.abs(currentDateToCheck.getTime() - logDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0 || diffDays === 1) {
+        if (diffDays === 1 || i === 0) { // Only increment streak for new days
+            streak++;
+            currentDateToCheck = new Date(logDate);
+        }
+      } else if (diffDays > 1) {
+        break; // Streak broken
+      }
+    }
+
+    return streak;
+  }, [logs]);
+
   const handleLog = useCallback(
     (values: ActivityFormValues) => {
       const processed = processActivity({
         transport: { mode: values.transportMode, distanceKm: values.distanceKm },
         diet: values.diet,
         homeEnergyKwh: values.homeEnergyKwh,
-        currentStreak: Math.min(logs.length, 30),
+        currentStreak,
         baselineFootprint: settings.dailyTargetKg,
       });
-      setLogs((current) =>
-        [
-          ...current,
-          {
-            ...processed,
-            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-            date: new Date().toISOString(),
-            transport: {
-              mode: values.transportMode,
-              distanceKm: values.distanceKm,
-            },
-            diet: values.diet,
-            homeEnergyKwh: values.homeEnergyKwh,
-          },
-        ].slice(-30)
-      );
+
+      const newLog = {
+        ...processed,
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        date: new Date().toISOString(),
+        transport: {
+          mode: values.transportMode,
+          distanceKm: values.distanceKm,
+        },
+        diet: values.diet,
+        homeEnergyKwh: values.homeEnergyKwh,
+      };
+
+      setLogs((current) => {
+        const nextLogs = [...current, newLog].slice(-30);
+
+        // Update mission progress
+        setSettings((currentSettings) => {
+          const { updatedState, newlyUnlockedBadges } = updateMissionProgress(nextLogs, currentSettings.missionState);
+          const newSettings = {
+            ...currentSettings,
+            missionState: updatedState,
+            unlockedBadges: [...currentSettings.unlockedBadges, ...newlyUnlockedBadges.map(b => b.id)]
+          };
+          saveUserSettings(newSettings);
+          return newSettings;
+        });
+
+        return nextLogs;
+      });
+
       setMissionAccepted(false);
     },
-    [logs.length, settings.dailyTargetKg]
+    [currentStreak, settings.dailyTargetKg]
   );
 
   const handleClearData = useCallback(() => {
@@ -169,6 +228,25 @@ export default function DashboardPage() {
     if (logs.length > 0) downloadLogsAsCSV(logs);
   }, [logs]);
 
+  const handleMissionAccept = useCallback(() => {
+    if (settings.missionState.activeMissionId) return;
+
+    const nextMission = suggestNextMission(logs, settings.missionState.completedMissionIds);
+    if (nextMission) {
+      const newSettings = {
+        ...settings,
+        missionState: {
+          ...settings.missionState,
+          activeMissionId: nextMission.id,
+          startedAt: new Date().toISOString(),
+        }
+      };
+      setSettings(newSettings);
+      saveUserSettings(newSettings);
+    }
+    setMissionAccepted(true);
+  }, [logs, settings]);
+
   const handleSaveTarget = useCallback(() => {
     const value = Number(targetInput);
     if (
@@ -176,13 +254,27 @@ export default function DashboardPage() {
       value >= INPUT_LIMITS.DAILY_TARGET_KG_MIN &&
       value <= INPUT_LIMITS.DAILY_TARGET_KG_MAX
     ) {
-      setSettings({
+      const newSettings = {
+        ...settings,
         dailyTargetKg: value,
         weeklyTargetKg: Math.round(value * 7),
-      });
+      };
+      setSettings(newSettings);
+      saveUserSettings(newSettings);
     }
     setEditingTarget(false);
-  }, [targetInput]);
+  }, [targetInput, settings]);
+
+  // ── Mission State ───────────────────────────────────────────────────────
+  const activeMission = useMemo(() => {
+    if (!settings.missionState.activeMissionId) return null;
+    return AVAILABLE_MISSIONS.find((m) => m.id === settings.missionState.activeMissionId) || null;
+  }, [settings.missionState.activeMissionId]);
+
+  const missionProgress = useMemo(() => {
+    if (!activeMission) return 0;
+    return activeMission.criteria(logs);
+  }, [activeMission, logs]);
 
   // ── Comparative context ─────────────────────────────────────────────────
   const comparisons = useMemo(() => {
@@ -588,8 +680,26 @@ export default function DashboardPage() {
               )}
             </section>
 
-            {/* Leaderboard */}
-            <div className="lg:col-span-5">
+            {/* Leaderboard & Missions */}
+            <div className="lg:col-span-5 flex flex-col gap-6">
+              {!activeMission ? (
+                <section className="panel p-5 sm:p-6">
+                  <h3 className="text-xl font-semibold text-white mb-2">Ready for a challenge?</h3>
+                  <p className="text-sm text-slate-400 mb-4">Take on a new mission to reduce your footprint and earn extra eco-points.</p>
+                  <button
+                    type="button"
+                    onClick={handleMissionAccept}
+                    className="primary-button w-full"
+                  >
+                    Accept New Mission
+                  </button>
+                </section>
+              ) : (
+                <div className="mb-4">
+                  <MissionProgress mission={activeMission} progress={missionProgress} />
+                </div>
+              )}
+
               <Leaderboard userPoints={totalPoints} />
             </div>
           </div>

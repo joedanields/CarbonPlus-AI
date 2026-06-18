@@ -46,20 +46,20 @@ export function getRelatableEquivalency(kg: number): string {
   const absKg = Math.abs(kg);
 
   if (absKg < 1) {
-    const val = Math.round(absKg * EQUIVALENCY_MAP.SMARTPHONE_CHARGES.valuePerKg);
-    return `${val} ${EQUIVALENCY_MAP.SMARTPHONE_CHARGES.label}`;
+    const val = Math.round(absKg * EQUIVALENCY_MAP.SMARTPHONE_CHARGES!.valuePerKg);
+    return `${val} ${EQUIVALENCY_MAP.SMARTPHONE_CHARGES!.label}`;
   }
 
   if (absKg < 10) {
-    const val = Math.round(absKg * EQUIVALENCY_MAP.CAR_KM.valuePerKg);
-    return `${val} ${EQUIVALENCY_MAP.CAR_KM.label}`;
+    const val = Math.round(absKg * EQUIVALENCY_MAP.CAR_KM!.valuePerKg);
+    return `${val} ${EQUIVALENCY_MAP.CAR_KM!.label}`;
   }
 
   if (absKg < 50) {
-    const val = Math.round(absKg * EQUIVALENCY_MAP.PAPER_SHEETS.valuePerKg);
-    return `${val} ${EQUIVALENCY_MAP.PAPER_SHEETS.label}`;
+    const val = Math.round(absKg * EQUIVALENCY_MAP.PAPER_SHEETS!.valuePerKg);
+    return `${val} ${EQUIVALENCY_MAP.PAPER_SHEETS!.label}`;
   }
 
-  const val = (absKg * EQUIVALENCY_MAP.FOREST_SQUARE_METERS.valuePerKg).toFixed(1);
-  return `${val} ${EQUIVALENCY_MAP.FOREST_SQUARE_METERS.label}`;
+  const val = (absKg * EQUIVALENCY_MAP.FOREST_SQUARE_METERS!.valuePerKg).toFixed(1);
+  return `${val} ${EQUIVALENCY_MAP.FOREST_SQUARE_METERS!.label}`;
 }

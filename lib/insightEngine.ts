@@ -23,7 +23,7 @@ import { getRelatableEquivalency } from "./equivalencies";
 
 type Template = {
   headline: string;
-  message: string;
+  message: (v: string, eq: string) => string;
   framework: string;
 };
 
@@ -108,32 +108,36 @@ export function generateDailyNudge(
 
   const trend = analyzeCarbonTrends(logs);
   const lastLog = logs[logs.length - 1];
-  const savingsValue = lastLog.carbonSavedKg;
+  const savingsValue = lastLog?.carbonSavedKg || 0;
   const equivalency = getRelatableEquivalency(savingsValue);
 
   // 1. Priority: Long-term Patterns (Leakage / Trend)
   if (trend.leakageDetected) {
-    const frame = PERSONA_FRAMES[persona].leakage;
-    return {
-      id: "nudge_leakage",
-      headline: frame.headline,
-      message: frame.message("", equivalency),
-      framework: frame.framework as any,
-      potentialSavingsKg: 0,
-      triggerContext: { trend },
-    };
+    const frame = PERSONA_FRAMES[persona]?.leakage;
+    if (frame) {
+      return {
+        id: "nudge_leakage",
+        headline: frame.headline,
+        message: frame.message("", equivalency),
+        framework: frame.framework as any,
+        potentialSavingsKg: 0,
+        triggerContext: { trend },
+      };
+    }
   }
 
   if (trend.isImproving) {
-    const frame = PERSONA_FRAMES[persona].trend_down;
-    return {
-      id: "nudge_trend_down",
-      headline: frame.headline,
-      message: frame.message(`${Math.abs(trend.velocity)}%`, equivalency),
-      framework: frame.framework as any,
-      potentialSavingsKg: 0,
-      triggerContext: { trend },
-    };
+    const frame = PERSONA_FRAMES[persona]?.trend_down;
+    if (frame) {
+      return {
+        id: "nudge_trend_down",
+        headline: frame.headline,
+        message: frame.message(`${Math.abs(trend.velocity)}%`, equivalency),
+        framework: frame.framework as any,
+        potentialSavingsKg: 0,
+        triggerContext: { trend },
+      };
+    }
   }
 
   // 2. Secondary: Short-term behavioral triggers (from original engine)
@@ -148,15 +152,19 @@ export function generateDailyNudge(
   if (transit) return adaptToPersona(transit, persona);
 
   // 3. Tertiary: Default nudge
-  const frame = PERSONA_FRAMES[persona].default;
-  return {
-    id: "nudge_default",
-    headline: frame.headline,
-    message: frame.message("", equivalency),
-    framework: frame.framework as any,
-    potentialSavingsKg: 0,
-    triggerContext: {},
-  };
+  const frame = PERSONA_FRAMES[persona]?.default;
+  if (frame) {
+    return {
+      id: "nudge_default",
+      headline: frame.headline,
+      message: frame.message("", equivalency),
+      framework: frame.framework as any,
+      potentialSavingsKg: 0,
+      triggerContext: {},
+    };
+  }
+
+  return null;
 }
 
 function adaptToPersona(nudge: BehavioralNudge, persona: UserPersona): BehavioralNudge {
