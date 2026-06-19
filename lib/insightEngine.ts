@@ -6,16 +6,11 @@
  */
 
 import type {
-  RecentLog,
   BehavioralNudge,
-  TransportMode,
   UserPersona,
   ActivityLog,
+  PsychologicalFramework,
 } from "./types";
-import {
-  DIET_FACTORS_KG_DAY,
-  TRANSPORT_FACTORS_KG_KM,
-} from "./constants";
 import { analyzeCarbonTrends, CarbonTrend } from "./patternAnalyzer";
 import { getRelatableEquivalency } from "./equivalencies";
 
@@ -23,8 +18,8 @@ import { getRelatableEquivalency } from "./equivalencies";
 
 type Template = {
   headline: string;
-  message: string;
-  framework: string;
+  message: (v: string, eq: string) => string;
+  framework: PsychologicalFramework;
 };
 
 const PERSONA_FRAMES: Record<UserPersona, Record<string, Template>> = {
@@ -108,35 +103,39 @@ export function generateDailyNudge(
 
   const trend = analyzeCarbonTrends(logs);
   const lastLog = logs[logs.length - 1];
-  const savingsValue = lastLog.carbonSavedKg;
+  const savingsValue = lastLog?.carbonSavedKg ?? 0;
   const equivalency = getRelatableEquivalency(savingsValue);
+
+  const personaFrames = PERSONA_FRAMES[persona];
 
   // 1. Priority: Long-term Patterns (Leakage / Trend)
   if (trend.leakageDetected) {
-    const frame = PERSONA_FRAMES[persona].leakage;
+    const frame = personaFrames["leakage"];
+    if (!frame) return null;
     return {
       id: "nudge_leakage",
       headline: frame.headline,
       message: frame.message("", equivalency),
-      framework: frame.framework as any,
+      framework: frame.framework,
       potentialSavingsKg: 0,
       triggerContext: { trend },
     };
   }
 
   if (trend.isImproving) {
-    const frame = PERSONA_FRAMES[persona].trend_down;
+    const frame = personaFrames["trend_down"];
+    if (!frame) return null;
     return {
       id: "nudge_trend_down",
       headline: frame.headline,
       message: frame.message(`${Math.abs(trend.velocity)}%`, equivalency),
-      framework: frame.framework as any,
+      framework: frame.framework,
       potentialSavingsKg: 0,
       triggerContext: { trend },
     };
   }
 
-  // 2. Secondary: Short-term behavioral triggers (from original engine)
+  // 2. Secondary: Short-term behavioral triggers
   const recent = logs.slice(-3).reverse();
   const meatless = evaluateMeatlessMonday(recent);
   if (meatless) return adaptToPersona(meatless, persona);
@@ -148,12 +147,13 @@ export function generateDailyNudge(
   if (transit) return adaptToPersona(transit, persona);
 
   // 3. Tertiary: Default nudge
-  const frame = PERSONA_FRAMES[persona].default;
+  const frame = personaFrames["default"];
+  if (!frame) return null;
   return {
     id: "nudge_default",
     headline: frame.headline,
     message: frame.message("", equivalency),
-    framework: frame.framework as any,
+    framework: frame.framework,
     potentialSavingsKg: 0,
     triggerContext: {},
   };
@@ -175,7 +175,7 @@ function adaptToPersona(nudge: BehavioralNudge, persona: UserPersona): Behaviora
 
 // ─── Original Evaluators (Preserved and Adapted) ──────────────────────────────────
 
-function evaluateMeatlessMonday(logs: any[]): BehavioralNudge | null {
+function evaluateMeatlessMonday(logs: ActivityLog[]): BehavioralNudge | null {
   const highMeatDays = logs.filter((l) => l.diet === "high_meat").length;
   if (highMeatDays < 2) return null;
   return {
@@ -188,10 +188,11 @@ function evaluateMeatlessMonday(logs: any[]): BehavioralNudge | null {
   };
 }
 
-function evaluateSubwaySubstitution(logs: any[]): BehavioralNudge | null {
+function evaluateSubwaySubstitution(logs: ActivityLog[]): BehavioralNudge | null {
   const shortCarTrips = logs.filter((l) => l.transport.mode === "car" && l.transport.distanceKm < 15);
   if (shortCarTrips.length < 2) return null;
   const latestTrip = shortCarTrips[0];
+  if (!latestTrip) return null;
   return {
     id: "nudge_subway_substitution",
     headline: "Switch Lanes — Your Commute Carbon Is Stacking Up",
@@ -202,7 +203,7 @@ function evaluateSubwaySubstitution(logs: any[]): BehavioralNudge | null {
   };
 }
 
-function evaluateBusTransitDefault(logs: any[]): BehavioralNudge | null {
+function evaluateBusTransitDefault(logs: ActivityLog[]): BehavioralNudge | null {
   const hasCarUsage = logs.some((l) => l.transport.mode === "car");
   const hasGreenMode = logs.some((l) => ["train", "bus", "walk", "cycle"].includes(l.transport.mode));
   if (!hasCarUsage || hasGreenMode) return null;

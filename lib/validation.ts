@@ -202,6 +202,14 @@ export function validateStoredSettings(data: unknown): UserSettings {
   const defaults: UserSettings = {
     dailyTargetKg: DEFAULT_DAILY_BASELINE_KG,
     weeklyTargetKg: DEFAULT_WEEKLY_TARGET_KG,
+    persona: "pragmatic",
+    onboardingCompleted: false,
+    missionState: {
+      activeMissionId: null,
+      startedAt: null,
+      completedMissionIds: [],
+    },
+    unlockedBadges: [],
   };
 
   if (typeof data !== "object" || data === null) return defaults;
@@ -220,5 +228,22 @@ export function validateStoredSettings(data: unknown): UserSettings {
       INPUT_LIMITS.DAILY_TARGET_KG_MAX * 7,
       DEFAULT_WEEKLY_TARGET_KG
     ),
+    persona: ["competitive", "analytical", "sensitive", "pragmatic"].includes(
+      settings["persona"] as string
+    )
+      ? (settings["persona"] as UserSettings["persona"])
+      : defaults.persona,
+    onboardingCompleted:
+      typeof settings["onboardingCompleted"] === "boolean"
+        ? settings["onboardingCompleted"]
+        : defaults.onboardingCompleted,
+    missionState:
+      typeof settings["missionState"] === "object" &&
+      settings["missionState"] !== null
+        ? (settings["missionState"] as UserSettings["missionState"])
+        : defaults.missionState,
+    unlockedBadges: Array.isArray(settings["unlockedBadges"])
+      ? (settings["unlockedBadges"] as string[])
+      : defaults.unlockedBadges,
   };
 }

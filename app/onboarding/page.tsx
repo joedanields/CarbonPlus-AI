@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { UserPersona, PERSONA_LABELS } from "../lib/types";
-import { saveUserSettings } from "../lib/storage";
-import { DEFAULT_DAILY_BASELINE_KG, DEFAULT_WEEKLY_TARGET_KG } from "../lib/constants";
+import { UserPersona, PERSONA_LABELS } from "../../lib/types";
+import { saveUserSettings } from "../../lib/storage";
+import { DEFAULT_DAILY_BASELINE_KG, DEFAULT_WEEKLY_TARGET_KG } from "../../lib/constants";
 
 type Step = "welcome" | "persona" | "baseline" | "goal";
 

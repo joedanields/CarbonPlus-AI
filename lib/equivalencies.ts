@@ -11,7 +11,9 @@ export interface Equivalency {
   unit: string;
 }
 
-const EQUIVALENCY_MAP: Record<string, Equivalency> = {
+type EquivalencyKey = "SMARTPHONE_CHARGES" | "CAR_KM" | "PAPER_SHEETS" | "FOREST_SQUARE_METERS";
+
+const EQUIVALENCY_MAP: Record<EquivalencyKey, Equivalency> = {
   SMARTPHONE_CHARGES: {
     label: "smartphone charges",
     valuePerKg: 30,

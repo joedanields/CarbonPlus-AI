@@ -14,7 +14,7 @@ import { loadActivityLogs, saveActivityLogs, clearActivityLogs, loadUserSettings
 import { downloadLogsAsCSV } from "../../lib/exportData";
 import { BENCHMARKS_KG_PER_DAY, DEFAULT_DAILY_BASELINE_KG, DEFAULT_WEEKLY_TARGET_KG, INPUT_LIMITS } from "../../lib/constants";
 import { updateMissionProgress, suggestNextMission } from "../../lib/missionManager";
-import type { ActivityLog, ActivityFormValues, RecentLog, UserSettings } from "../../lib/types";
+import type { ActivityLog, ActivityFormValues, UserSettings } from "../../lib/types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -38,6 +38,10 @@ export default function DashboardPage() {
   const [settings, setSettings] = useState<UserSettings>({
     dailyTargetKg: DEFAULT_DAILY_BASELINE_KG,
     weeklyTargetKg: DEFAULT_WEEKLY_TARGET_KG,
+    persona: "pragmatic",
+    onboardingCompleted: false,
+    missionState: { activeMissionId: null, startedAt: null, completedMissionIds: [] },
+    unlockedBadges: [],
   });
   const [editingTarget, setEditingTarget] = useState(false);
   const [targetInput, setTargetInput] = useState("");
@@ -98,20 +102,7 @@ export default function DashboardPage() {
   }, [latest, settings.dailyTargetKg]);
 
   // ── Nudge engine ────────────────────────────────────────────────────────
-  const recentLogs = useMemo<RecentLog[]>(
-    () =>
-      logs
-        .slice(-3)
-        .reverse()
-        .map((log) => ({
-          date: log.date,
-          transport: log.transport,
-          diet: log.diet,
-          totalCarbonSaved: log.carbonSavedKg,
-        })),
-    [logs]
-  );
-  const nudge = useMemo(() => generateDailyNudge(recentLogs), [recentLogs]);
+  const nudge = useMemo(() => generateDailyNudge(logs), [logs]);
 
   const fallbackInsight = latest?.breakdown.reduce((largest, item) =>
     item.valueKg > largest.valueKg ? item : largest
@@ -176,10 +167,11 @@ export default function DashboardPage() {
       value >= INPUT_LIMITS.DAILY_TARGET_KG_MIN &&
       value <= INPUT_LIMITS.DAILY_TARGET_KG_MAX
     ) {
-      setSettings({
+      setSettings((prev) => ({
+        ...prev,
         dailyTargetKg: value,
         weeklyTargetKg: Math.round(value * 7),
-      });
+      }));
     }
     setEditingTarget(false);
   }, [targetInput]);

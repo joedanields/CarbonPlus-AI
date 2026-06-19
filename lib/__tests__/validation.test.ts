@@ -17,7 +17,8 @@ describe("validateFormValues", () => {
   });
 
   it("detects invalid transport mode", () => {
-    const values = { ...validValues, transportMode: "spaceship" as any };
+    // @ts-expect-error — intentionally passing an invalid mode to test the validator
+    const values: ActivityFormValues = { ...validValues, transportMode: "spaceship" };
     const result = validateFormValues(values);
     expect(result.valid).toBe(false);
     expect(result.errors.transportMode).toBeDefined();

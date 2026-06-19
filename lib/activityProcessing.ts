@@ -128,8 +128,8 @@ function calculatePoints(
   // Below-baseline bonus
   if (carbonDeltaKg < 0) points += POINTS.BELOW_BASELINE_BONUS;
 
-  // Streak multiplier (capped to prevent runaway accumulation)
-  const cappedStreak = Math.min(streak, POINTS.MAX_STREAK_DAYS);
+  // Streak multiplier (capped to prevent runaway accumulation; floored at 0 for safety)
+  const cappedStreak = Math.min(Math.max(0, streak), POINTS.MAX_STREAK_DAYS);
   points += cappedStreak * POINTS.STREAK_MULTIPLIER;
 
   return points;
