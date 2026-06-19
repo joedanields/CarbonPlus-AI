@@ -5,7 +5,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "pages:build": "opennextjs-cloudflare build",
+    "pages:preview": "opennextjs-cloudflare preview",
+    "pages:deploy": "opennextjs-cloudflare deploy"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
@@ -14,12 +17,13 @@
     "@types/react-dom": "^19.2.3",
     "playwright": "^1.60.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "wrangler": "^4.103.0"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.0",
     "autoprefixer": "^10.5.0",
-    "next": "^16.2.7",
+    "next": "16.2.7",
     "postcss": "^8.5.15",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
