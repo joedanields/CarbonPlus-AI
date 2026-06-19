@@ -8,12 +8,14 @@ import TrendChart from "../../components/TrendChart";
 import Leaderboard from "../../components/Leaderboard";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import MissionProgress from "../../components/MissionProgress";
+import CoachPanel from "../../components/CoachPanel";
 import { processActivity } from "../../lib/activityProcessing";
 import { generateDailyNudge } from "../../lib/insightEngine";
 import { loadActivityLogs, saveActivityLogs, clearActivityLogs, loadUserSettings, saveUserSettings } from "../../lib/storage";
 import { downloadLogsAsCSV } from "../../lib/exportData";
 import { BENCHMARKS_KG_PER_DAY, DEFAULT_DAILY_BASELINE_KG, DEFAULT_WEEKLY_TARGET_KG, INPUT_LIMITS } from "../../lib/constants";
 import { updateMissionProgress, suggestNextMission } from "../../lib/missionManager";
+import { AVAILABLE_MISSIONS } from "../../lib/missions";
 import type { ActivityLog, ActivityFormValues, UserSettings } from "../../lib/types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -104,6 +106,22 @@ export default function DashboardPage() {
   // ── Nudge engine ────────────────────────────────────────────────────────
   const nudge = useMemo(() => generateDailyNudge(logs), [logs]);
 
+  // ── Mission engine ───────────────────────────────────────────────────────
+  const activeMission = useMemo(
+    () => {
+      if (settings.missionState.activeMissionId) {
+        return AVAILABLE_MISSIONS.find(m => m.id === settings.missionState.activeMissionId) ?? null;
+      }
+      return suggestNextMission(logs, settings.missionState.completedMissionIds);
+    },
+    [logs, settings.missionState]
+  );
+
+  const missionProgress = useMemo(
+    () => activeMission?.criteria(logs) ?? 0,
+    [activeMission, logs]
+  );
+
   const fallbackInsight = latest?.breakdown.reduce((largest, item) =>
     item.valueKg > largest.valueKg ? item : largest
   );
@@ -128,8 +146,8 @@ export default function DashboardPage() {
         currentStreak: Math.min(logs.length, 30),
         baselineFootprint: settings.dailyTargetKg,
       });
-      setLogs((current) =>
-        [
+      setLogs((current) => {
+        const next = [
           ...current,
           {
             ...processed,
@@ -142,8 +160,20 @@ export default function DashboardPage() {
             diet: values.diet,
             homeEnergyKwh: values.homeEnergyKwh,
           },
-        ].slice(-30)
-      );
+        ].slice(-30);
+
+        // ── Mission progress check ───────────────────────────────────────
+        const { updatedState, newlyUnlockedBadges } = updateMissionProgress(next, settings.missionState);
+        if (newlyUnlockedBadges.length > 0 || updatedState !== settings.missionState) {
+          setSettings((prev) => ({
+            ...prev,
+            missionState: updatedState,
+            unlockedBadges: [...prev.unlockedBadges, ...newlyUnlockedBadges.map(b => b.id)],
+          }));
+        }
+
+        return next;
+      });
       setMissionAccepted(false);
     },
     [logs.length, settings.dailyTargetKg]
@@ -496,12 +526,27 @@ export default function DashboardPage() {
 
                 <button
                   type="button"
-                  onClick={() => setMissionAccepted(true)}
+                  onClick={() => {
+                    if (activeMission && !settings.missionState.activeMissionId) {
+                      setSettings((prev) => ({
+                        ...prev,
+                        missionState: {
+                          ...prev.missionState,
+                          activeMissionId: activeMission.id,
+                          startedAt: new Date().toISOString(),
+                        },
+                      }));
+                    }
+                    setMissionAccepted(true);
+                  }}
                   disabled={!latest || missionAccepted}
                   className="secondary-button mt-4"
+                  aria-label={activeMission ? `Start mission: ${activeMission.title}` : "Commit to this action"}
                 >
                   {missionAccepted
-                    ? "Action added for tomorrow"
+                    ? "Mission accepted ✓"
+                    : activeMission
+                    ? `Start: ${activeMission.title}`
                     : "Commit to this action"}
                 </button>
               </div>
@@ -584,15 +629,41 @@ export default function DashboardPage() {
             <div className="lg:col-span-5">
               <Leaderboard userPoints={totalPoints} />
             </div>
+
+            {/* Mission Panel — full width */}
+            {activeMission && (
+              <section
+                className="panel p-5 sm:p-6 lg:col-span-12"
+                aria-labelledby="mission-heading"
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="eyebrow">Active challenge</p>
+                    <h2
+                      id="mission-heading"
+                      className="mt-1 text-xl font-semibold text-white"
+                    >
+                      Your current mission
+                    </h2>
+                  </div>
+                  <span className="status-pill">
+                    {settings.missionState.completedMissionIds.length} completed
+                  </span>
+                </div>
+                <MissionProgress mission={activeMission} progress={missionProgress} />
+              </section>
+            )}
+            {/* PULSE AI Coach — full width */}
+            <CoachPanel logs={logs} settings={settings} />
           </div>
 
           {/* ── Footer ──────────────────────────────────────────────── */}
           <footer className="mt-8 flex flex-col gap-2 border-t border-white/8 py-5 text-xs text-slate-600 sm:flex-row sm:justify-between">
             <p>
-              Estimates use published average emission factors and are intended
-              for personal guidance.
+              Emission estimates use DEFRA 2024/2025 and Scarborough et al.
+              factors — intended for personal guidance only.
             </p>
-            <p>CarbonPulse MVP · Local-first and dependency-light</p>
+            <p>CarbonPulse · Local-first · AI-coached by Gemini</p>
           </footer>
         </div>
       </main>

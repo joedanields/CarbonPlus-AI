@@ -257,3 +257,62 @@ button, input, select { font: inherit; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ─── AI Coach Panel ───────────────────────────────────────────────────────── */
+
+.coach-panel {
+  background:
+    radial-gradient(circle at 0% 100%, rgba(248, 190, 91, 0.08), transparent 40%),
+    radial-gradient(circle at 100% 0%, rgba(66, 232, 165, 0.06), transparent 40%),
+    rgba(13, 25, 22, 0.92);
+  border-color: rgba(248, 190, 91, 0.2);
+}
+
+.pulse-avatar {
+  display: grid;
+  height: 2.75rem;
+  width: 2.75rem;
+  place-items: center;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(248, 190, 91, 0.45);
+  background: rgba(248, 190, 91, 0.1);
+  font-size: 1.1rem;
+  box-shadow: 0 0 18px rgba(248, 190, 91, 0.2);
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(248, 190, 91, 0.15); }
+  50%       { box-shadow: 0 0 28px rgba(248, 190, 91, 0.4); }
+}
+
+.coach-skeleton {
+  height: 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.coach-response p::after {
+  content: "▋";
+  display: inline-block;
+  margin-left: 1px;
+  color: #42e8a5;
+  animation: blink-cursor 0.9s step-end infinite;
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
