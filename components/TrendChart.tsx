@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import type { ActivityLog } from "../lib/types";
 
 /**
@@ -16,21 +16,24 @@ interface TrendChartProps {
 }
 
 function TrendChartInner({ logs, dailyBaselineKg }: TrendChartProps) {
-  const recent = logs.slice(-7);
-  const max = Math.max(
-    dailyBaselineKg,
-    ...recent.map((log) => log.totalEmissionsKg)
-  );
-  const points = recent
-    .map((log, index) => {
-      const x =
-        recent.length === 1
-          ? 50
-          : 8 + (index / (recent.length - 1)) * 84;
-      return `${x},${90 - (log.totalEmissionsKg / max) * 72}`;
-    })
-    .join(" ");
-  const baselineY = 90 - (dailyBaselineKg / max) * 72;
+  const { recent, max, points, baselineY } = useMemo(() => {
+    const recentLogs = logs.slice(-7);
+    const maxVal = Math.max(
+      dailyBaselineKg,
+      ...recentLogs.map((log) => log.totalEmissionsKg)
+    );
+    const pts = recentLogs
+      .map((log, index) => {
+        const x =
+          recentLogs.length === 1
+            ? 50
+            : 8 + (index / (recentLogs.length - 1)) * 84;
+        return `${x},${90 - (log.totalEmissionsKg / maxVal) * 72}`;
+      })
+      .join(" ");
+    const blY = 90 - (dailyBaselineKg / maxVal) * 72;
+    return { recent: recentLogs, max: maxVal, points: pts, baselineY: blY };
+  }, [logs, dailyBaselineKg]);
 
   if (recent.length === 0) {
     return (

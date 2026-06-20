@@ -3,3 +3,7 @@ node_modules/
 .next/
 test-results/
 tsconfig.tsbuildinfo
+.open-next/
+.wrangler/
+.env.local
+.dev.vars

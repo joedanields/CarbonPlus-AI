@@ -6,10 +6,19 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "CarbonPulse | Personal Carbon Tracker",
+  title: "CarbonPulse AI | Individual Carbon Tracking, Understanding & Reduction",
   description:
-    "Understand, track, and reduce your carbon footprint through simple daily actions and personalized insights. Local-first, no account required.",
-  keywords: ["carbon tracker", "carbon footprint", "sustainability", "emissions", "climate"],
+    "CarbonPulse AI helps individuals track, understand, and reduce their personal carbon footprint through actionable, gamified insights. AI-coached carbon reduction with eco-points, missions, and behavioral nudges.",
+  keywords: [
+    "individual carbon tracking",
+    "carbon footprint reduction",
+    "actionable carbon insights",
+    "gamified sustainability",
+    "carbon understanding",
+    "personal emissions tracker",
+    "AI carbon coach",
+    "carbon reduction tool",
+  ],
   robots: "index, follow",
 };
 

@@ -498,6 +498,7 @@ export default function DashboardPage() {
                         type="button"
                         onClick={handleSaveTarget}
                         className="text-xs font-medium text-pulse hover:underline"
+                        aria-label="Save daily carbon target"
                       >
                         Save
                       </button>
@@ -505,6 +506,7 @@ export default function DashboardPage() {
                         type="button"
                         onClick={() => setEditingTarget(false)}
                         className="text-xs text-slate-500 hover:underline"
+                        aria-label="Cancel daily carbon target edit"
                       >
                         Cancel
                       </button>

@@ -23,6 +23,51 @@ const GEMINI_API_URL =
 
 const MAX_BODY_BYTES = 32_000; // ~32kB max to prevent payload abuse
 
+// ─── IP-Based Rate Limiter ────────────────────────────────────────────────────
+
+/** Maximum number of requests per IP within the sliding window. */
+const RATE_LIMIT_MAX_REQUESTS = 5;
+
+/** Sliding window duration in milliseconds (60 seconds). */
+const RATE_LIMIT_WINDOW_MS = 60_000;
+
+/** Stale entry cleanup interval — purge entries older than 2 windows. */
+const RATE_LIMIT_CLEANUP_MS = RATE_LIMIT_WINDOW_MS * 2;
+
+/** In-memory store mapping IP → array of request timestamps. */
+const rateLimitStore = new Map<string, number[]>();
+
+let lastCleanup = Date.now();
+
+/**
+ * Checks whether an IP has exceeded the rate limit.
+ * Returns `true` if the request should be blocked.
+ */
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+
+  // Periodic cleanup of stale entries to prevent memory leaks
+  if (now - lastCleanup > RATE_LIMIT_CLEANUP_MS) {
+    const cutoff = now - RATE_LIMIT_WINDOW_MS;
+    for (const [key, timestamps] of rateLimitStore.entries()) {
+      const active = timestamps.filter((t) => t > cutoff);
+      if (active.length === 0) {
+        rateLimitStore.delete(key);
+      } else {
+        rateLimitStore.set(key, active);
+      }
+    }
+    lastCleanup = now;
+  }
+
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+  const timestamps = (rateLimitStore.get(ip) ?? []).filter((t) => t > windowStart);
+  timestamps.push(now);
+  rateLimitStore.set(ip, timestamps);
+
+  return timestamps.length > RATE_LIMIT_MAX_REQUESTS;
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // ── API key guard ──────────────────────────────────────────────────────
   const apiKey = process.env.GEMINI_API_KEY;
@@ -30,6 +75,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       { error: "GEMINI_API_KEY not configured on this deployment." },
       { status: 503 }
+    );
+  }
+
+  // ── Rate limit guard ────────────────────────────────────────────────────
+  const clientIp =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("cf-connecting-ip") ??
+    "unknown";
+  if (isRateLimited(clientIp)) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again shortly." },
+      { status: 429 }
     );
   }
 
