@@ -208,7 +208,7 @@ export default function ActivityForm({ onLog }: ActivityFormProps) {
           </label>
         </div>
 
-        <button type="submit" className="primary-button w-full">
+        <button type="submit" className="primary-button w-full" aria-label="Log Daily Activity">
           Calculate my footprint
           <svg
             viewBox="0 0 24 24"

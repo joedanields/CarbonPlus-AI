@@ -103,6 +103,7 @@ export default function ConfirmDialog({
             type="button"
             className="secondary-button"
             onClick={onCancel}
+            aria-label="Cancel"
           >
             {cancelLabel}
           </button>
@@ -110,6 +111,7 @@ export default function ConfirmDialog({
             type="button"
             className="primary-button"
             onClick={onConfirm}
+            aria-label="Confirm"
           >
             {confirmLabel}
           </button>

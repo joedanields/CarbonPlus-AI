@@ -191,7 +191,7 @@ export default function CoachPanel({ logs, settings }: CoachPanelProps) {
             onClick={fetchCoaching}
             disabled={!hasEnoughData}
             className="primary-button"
-            aria-disabled={!hasEnoughData}
+            aria-label="Generate AI Insight"
           >
             <span aria-hidden="true">⚡</span>
             Get PULSE coaching
@@ -221,6 +221,7 @@ export default function CoachPanel({ logs, settings }: CoachPanelProps) {
               type="button"
               onClick={fetchCoaching}
               className="secondary-button text-xs"
+              aria-label="Ask PULSE for another insight"
             >
               Ask PULSE again
             </button>
@@ -238,6 +239,7 @@ export default function CoachPanel({ logs, settings }: CoachPanelProps) {
             type="button"
             onClick={() => setState({ status: "idle" })}
             className="mt-3 text-xs text-slate-500 hover:text-white"
+            aria-label="Dismiss error message"
           >
             Dismiss
           </button>

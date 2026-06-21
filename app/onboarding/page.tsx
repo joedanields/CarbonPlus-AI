@@ -46,11 +46,12 @@ export default function OnboardingPage() {
               </div>
               <h1 className="text-3xl font-bold">Sync Your Pulse</h1>
               <p className="text-slate-400">
-                Welcome to CarbonPulse. Let's calibrate your personal dashboard to help you track and reduce your impact.
+                Welcome to CarbonPulse AI. Let's calibrate your personal dashboard to help you track, understand, and actively reduce your individual carbon footprint through actionable, gamified insights.
               </p>
               <button
                 onClick={() => setStep("persona")}
                 className="primary-button w-full py-4"
+                aria-label="Start Onboarding"
               >
                 Get Started
               </button>
@@ -69,6 +70,7 @@ export default function OnboardingPage() {
                   <button
                     key={id}
                     onClick={() => setPersona(id)}
+                    aria-label={`Select ${label} persona`}
                     className={`text-left p-4 rounded-xl border transition-all ${
                       persona === id
                         ? "border-pulse bg-pulse/10 text-white"
@@ -82,6 +84,7 @@ export default function OnboardingPage() {
               <button
                 onClick={() => setStep("baseline")}
                 className="secondary-button w-full"
+                aria-label="Continue to next step"
               >
                 Continue
               </button>
@@ -110,6 +113,7 @@ export default function OnboardingPage() {
               <button
                 onClick={() => setStep("goal")}
                 className="secondary-button w-full"
+                aria-label="Continue to goal step"
               >
                 Continue
               </button>
@@ -128,6 +132,7 @@ export default function OnboardingPage() {
               <button
                 onClick={completeOnboarding}
                 className="primary-button w-full py-4"
+                aria-label="Launch CarbonPulse Dashboard"
               >
                 Launch Dashboard
               </button>
