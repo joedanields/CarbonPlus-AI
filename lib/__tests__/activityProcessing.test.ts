@@ -11,6 +11,7 @@ describe("processActivity", () => {
       diet: "vegan",
       currentStreak: streak,
       baselineFootprint: baseline,
+      simpleActions: [],
     });
     expect(result.transportEmissionsKg).toBe(0);
   });
@@ -79,6 +80,30 @@ describe("processActivity", () => {
     expect(result.transportEmissionsKg).toBe(0);
     expect(result.totalEmissionsKg).toBeGreaterThanOrEqual(0);
     expect(result.pointsEarned).toBeGreaterThanOrEqual(0);
+  });
+
+  it("deducts simple actions savings from home energy", () => {
+    const result = processActivity({
+      transport: { mode: "walk", distanceKm: 0 },
+      diet: "mixed",
+      homeEnergyKwh: 1, // 1 * 0.82 = 0.82
+      currentStreak: 0,
+      baselineFootprint: 12,
+      simpleActions: ["cold_water_wash"], // -0.40
+    });
+    expect(result.homeEnergyEmissionsKg).toBe(0.42); // 0.82 - 0.40 = 0.42
+  });
+
+  it("floors home energy emissions at 0 when simple actions exceed it", () => {
+    const result = processActivity({
+      transport: { mode: "walk", distanceKm: 0 },
+      diet: "mixed",
+      homeEnergyKwh: 0, // 0
+      currentStreak: 0,
+      baselineFootprint: 12,
+      simpleActions: ["thermostat_drop"], // -0.50
+    });
+    expect(result.homeEnergyEmissionsKg).toBe(0);
   });
 
   it("correctly generates breakdown percentages", () => {

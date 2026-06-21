@@ -36,6 +36,22 @@ export const DIET_FACTORS_KG_DAY: Readonly<Record<DietType, number>> = {
  */
 export const DEFAULT_GRID_INTENSITY_KG_KWH = 0.82;
 
+// ─── Simple Actions Constants ─────────────────────────────────────────────────
+
+export const SIMPLE_ACTIONS_KG_SAVINGS: Record<string, number> = {
+  thermostat_drop: 0.50,
+  cold_water_wash: 0.40,
+  efficient_boiling: 0.03,
+  digital_fasting: 0.10,
+} as const;
+
+export const SIMPLE_ACTIONS_LABELS: Record<string, string> = {
+  thermostat_drop: "Lowered thermostat by 1°C",
+  cold_water_wash: "Washed laundry on cold",
+  efficient_boiling: "Boiled only needed water",
+  digital_fasting: "Digital fasting (No HD streaming after 10PM)",
+} as const;
+
 // ─── Gamification Constants ───────────────────────────────────────────────────
 
 export const POINTS = {

@@ -1,9 +1,10 @@
 "use client";
 
 import { FormEvent, useState, useCallback, useRef } from "react";
-import type { ActivityFormValues, TransportMode, DietType } from "../lib/types";
+import type { ActivityFormValues, TransportMode, DietType, SimpleActionType } from "../lib/types";
 import { TRANSPORT_LABELS, DIET_LABELS } from "../lib/types";
 import { validateFormValues } from "../lib/validation";
+import { SIMPLE_ACTIONS_LABELS } from "../lib/constants";
 
 /**
  * ActivityForm — Daily Carbon Activity Input Form
@@ -33,6 +34,7 @@ export default function ActivityForm({ onLog }: ActivityFormProps) {
   const [distanceKm, setDistanceKm] = useState("");
   const [diet, setDiet] = useState<DietType>("mixed");
   const [homeEnergyKwh, setHomeEnergyKwh] = useState("");
+  const [simpleActions, setSimpleActions] = useState<SimpleActionType[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof ActivityFormValues, string>>
@@ -55,6 +57,7 @@ export default function ActivityForm({ onLog }: ActivityFormProps) {
         distanceKm: Number(distanceKm),
         diet,
         homeEnergyKwh: Number(homeEnergyKwh),
+        simpleActions,
       };
 
       const validation = validateFormValues(values);
@@ -69,9 +72,10 @@ export default function ActivityForm({ onLog }: ActivityFormProps) {
       onLog(values);
       setDistanceKm("");
       setHomeEnergyKwh("");
+      setSimpleActions([]);
       setStatusMessage("Activity added. Your footprint has been updated.");
     },
-    [transportMode, distanceKm, diet, homeEnergyKwh, onLog]
+    [transportMode, distanceKm, diet, homeEnergyKwh, simpleActions, onLog]
   );
 
   return (
@@ -206,6 +210,29 @@ export default function ActivityForm({ onLog }: ActivityFormProps) {
               </span>
             )}
           </label>
+        </div>
+
+        <div className="pt-2 pb-2">
+          <p className="field-label mb-3">Did you complete any simple actions today?</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(Object.keys(SIMPLE_ACTIONS_LABELS) as SimpleActionType[]).map((action) => (
+              <label key={action} className="flex items-center gap-3 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={simpleActions.includes(action)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSimpleActions((prev) => [...prev, action]);
+                    } else {
+                      setSimpleActions((prev) => prev.filter((a) => a !== action));
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-white/20 bg-black/20 text-pulse accent-pulse focus:ring-pulse focus:ring-offset-0"
+                />
+                {SIMPLE_ACTIONS_LABELS[action]}
+              </label>
+            ))}
+          </div>
         </div>
 
         <button type="submit" className="primary-button w-full" aria-label="Log Daily Activity">

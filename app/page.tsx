@@ -27,6 +27,7 @@ export default function HomePage() {
       className="min-h-screen bg-grid flex items-center justify-center"
       aria-label="Loading CarbonPulse"
       role="status"
+      aria-busy="true"
     >
       <span className="brand-mark animate-pulse" aria-hidden="true">
         <svg viewBox="0 0 24 24" className="h-5 w-5">

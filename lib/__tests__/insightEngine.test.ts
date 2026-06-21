@@ -21,6 +21,7 @@ function makeLog(
     carbonSavedKg: 6.37,
     pointsEarned: 10,
     breakdown: [],
+    simpleActions: [],
     ...overrides,
   };
 }
@@ -100,5 +101,53 @@ describe("generateDailyNudge", () => {
     if (nudge) {
       expect(nudge.id).not.toBe("nudge_bus_transit_default");
     }
+  });
+});
+
+import { vi } from "vitest";
+
+describe("generateDailyNudge - New Micro-Actions", () => {
+  const logs = [makeLog("2026-06-12", { carbonSavedKg: 0 })];
+
+  it("fires efficient boiling nudge in the morning", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 12, 7, 30)); // 07:30 Local
+    const nudge = generateDailyNudge(logs);
+    if (nudge?.id !== "nudge_leakage" && nudge?.id !== "nudge_trend_down") {
+      expect(nudge?.id).toBe("nudge_efficient_boiling");
+    }
+    vi.useRealTimers();
+  });
+
+  it("fires digital fasting nudge late at night", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 12, 23, 30)); // 23:30 Local
+    const nudge = generateDailyNudge(logs);
+    if (nudge?.id !== "nudge_leakage" && nudge?.id !== "nudge_trend_down") {
+      expect(nudge?.id).toBe("nudge_digital_fasting");
+    }
+    vi.useRealTimers();
+  });
+
+  it("fires cold water laundry on weekends", () => {
+    vi.useFakeTimers();
+    // 2026-06-14 is a Sunday
+    vi.setSystemTime(new Date(2026, 5, 14, 12, 0)); // 12:00 Local Sunday
+    const nudge = generateDailyNudge(logs);
+    if (nudge?.id !== "nudge_leakage" && nudge?.id !== "nudge_trend_down") {
+      expect(nudge?.id).toBe("nudge_cold_water_laundry");
+    }
+    vi.useRealTimers();
+  });
+
+  it("fires thermostat drop in winter", () => {
+    vi.useFakeTimers();
+    // Jan 15th
+    vi.setSystemTime(new Date(2026, 0, 15, 12, 0)); // 12:00 Local Jan 15th
+    const nudge = generateDailyNudge(logs);
+    if (nudge?.id !== "nudge_leakage" && nudge?.id !== "nudge_trend_down") {
+      expect(nudge?.id).toBe("nudge_thermostat_drop");
+    }
+    vi.useRealTimers();
   });
 });

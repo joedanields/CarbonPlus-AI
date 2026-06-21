@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ActivityForm from "../../components/ActivityForm";
-import FootprintRing from "../../components/FootprintRing";
-import TrendChart from "../../components/TrendChart";
-import Leaderboard from "../../components/Leaderboard";
+import dynamic from "next/dynamic";
+
+const FootprintRing = dynamic(() => import("../../components/FootprintRing"));
+const TrendChart = dynamic(() => import("../../components/TrendChart"));
+const Leaderboard = dynamic(() => import("../../components/Leaderboard"));
+const CoachPanel = dynamic(() => import("../../components/CoachPanel"));
 import ConfirmDialog from "../../components/ConfirmDialog";
 import MissionProgress from "../../components/MissionProgress";
-import CoachPanel from "../../components/CoachPanel";
 import { processActivity } from "../../lib/activityProcessing";
 import { generateDailyNudge } from "../../lib/insightEngine";
 import { loadActivityLogs, saveActivityLogs, clearActivityLogs, loadUserSettings, saveUserSettings } from "../../lib/storage";

@@ -20,6 +20,7 @@ import {
   DIET_FACTORS_KG_DAY,
   DEFAULT_GRID_INTENSITY_KG_KWH,
   POINTS,
+  SIMPLE_ACTIONS_KG_SAVINGS,
 } from "./constants";
 
 // ─── Core Processing Function ─────────────────────────────────────────────────
@@ -38,6 +39,7 @@ export function processActivity(input: ActivityInput): ProcessedActivity {
     gridIntensityKgPerKwh = DEFAULT_GRID_INTENSITY_KG_KWH,
     currentStreak,
     baselineFootprint,
+    simpleActions = [],
   } = input;
 
   // ── 1. Transport emissions ─────────────────────────────────────────────────
@@ -61,9 +63,15 @@ export function processActivity(input: ActivityInput): ProcessedActivity {
     DIET_FACTORS_KG_DAY[diet] ?? DIET_FACTORS_KG_DAY.mixed
   );
 
-  // ── 3. Home energy emissions (E_elec = C_kWh × EF_grid) ───────────────────
+  // ── 3. Home energy & Simple Actions emissions ───────────────────────────────
+  const rawHomeEnergyEmissionsKg = safeHomeEnergyKwh * gridIntensityKgPerKwh;
+  
+  const simpleActionsSavings = simpleActions.reduce((total, action) => {
+    return total + (SIMPLE_ACTIONS_KG_SAVINGS[action] ?? 0);
+  }, 0);
+
   const homeEnergyEmissionsKg = roundTo4(
-    safeHomeEnergyKwh * gridIntensityKgPerKwh
+    Math.max(0, rawHomeEnergyEmissionsKg - simpleActionsSavings)
   );
 
   // ── 4. Totals and delta ────────────────────────────────────────────────────
@@ -99,6 +107,7 @@ export function processActivity(input: ActivityInput): ProcessedActivity {
     carbonSavedKg,
     pointsEarned,
     breakdown,
+    simpleActions,
   };
 }
 

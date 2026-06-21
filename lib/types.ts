@@ -33,6 +33,15 @@ export const DIET_LABELS: Record<DietType, string> = {
   high_meat: "High-meat diet",
 } as const;
 
+// ─── Simple Actions ───────────────────────────────────────────────────────────
+
+/** Quick actions a user can log for immediate carbon savings. */
+export type SimpleActionType =
+  | "thermostat_drop"
+  | "cold_water_wash"
+  | "efficient_boiling"
+  | "digital_fasting";
+
 // ─── Psychological Frameworks ─────────────────────────────────────────────────
 
 /** Behavioral nudge psychological frameworks (Fogg B=MAP, Nudge Theory). */
@@ -52,6 +61,7 @@ export interface ActivityFormValues {
   distanceKm: number;
   diet: DietType;
   homeEnergyKwh: number;
+  simpleActions: SimpleActionType[];
 }
 
 /** Input shape for the emissions processing engine. */
@@ -69,6 +79,8 @@ export interface ActivityInput {
   currentStreak: number;
   /** User's personal daily baseline in kg CO2e. */
   baselineFootprint: number;
+  /** Array of simple actions completed today. */
+  simpleActions: SimpleActionType[];
 }
 
 /** Breakdown entry for SVG donut chart. */
@@ -99,6 +111,7 @@ export interface ActivityLog extends ProcessedActivity {
   transport: { mode: TransportMode; distanceKm: number };
   diet: DietType;
   homeEnergyKwh: number;
+  simpleActions: SimpleActionType[];
 }
 
 // ─── Insight Engine ───────────────────────────────────────────────────────────

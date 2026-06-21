@@ -146,6 +146,18 @@ export function generateDailyNudge(
   const transit = evaluateBusTransitDefault(recent);
   if (transit) return adaptToPersona(transit, persona);
 
+  const digitalFasting = evaluateDigitalFasting();
+  if (digitalFasting) return adaptToPersona(digitalFasting, persona);
+
+  const coldWater = evaluateColdWaterLaundry();
+  if (coldWater) return adaptToPersona(coldWater, persona);
+
+  const efficientBoiling = evaluateHighEfficiencyBoiling();
+  if (efficientBoiling) return adaptToPersona(efficientBoiling, persona);
+
+  const thermostat = evaluateThermostatDrop();
+  if (thermostat) return adaptToPersona(thermostat, persona);
+
   // 3. Tertiary: Default nudge
   const frame = personaFrames["default"];
   if (!frame) return null;
@@ -214,5 +226,59 @@ function evaluateBusTransitDefault(logs: ActivityLog[]): BehavioralNudge | null 
     framework: "DEFAULT_BIAS",
     potentialSavingsKg: 0.8,
     triggerContext: { exclusiveCarDays: logs.filter(l => l.transport.mode === "car").length },
+  };
+}
+
+function evaluateThermostatDrop(): BehavioralNudge | null {
+  const month = new Date().getMonth();
+  // Assume Winter in Northern Hemisphere for this simple heuristic
+  if (month !== 11 && month !== 0 && month !== 1) return null;
+  return {
+    id: "nudge_thermostat_drop",
+    headline: "Dial Down the Heat",
+    message: "Lowering your thermostat by just 1°C reduces your heating footprint by 10% without affecting ambient comfort.",
+    framework: "SALIENCE", // Anchoring effect
+    potentialSavingsKg: 0.50,
+    triggerContext: { month },
+  };
+}
+
+function evaluateHighEfficiencyBoiling(): BehavioralNudge | null {
+  const hour = new Date().getHours();
+  if (hour < 6 || hour >= 9) return null;
+  return {
+    id: "nudge_efficient_boiling",
+    headline: "High-Efficiency Boiling",
+    message: "Only boil the exact volume of water you need for your morning coffee. It prevents 30g of wasted CO2e.",
+    framework: "GAMIFICATION", // Micro-Habit Stacking
+    potentialSavingsKg: 0.03,
+    triggerContext: { hour },
+  };
+}
+
+function evaluateColdWaterLaundry(): BehavioralNudge | null {
+  const day = new Date().getDay();
+  // 0 is Sunday, 6 is Saturday
+  if (day !== 0 && day !== 6) return null;
+  return {
+    id: "nudge_cold_water_laundry",
+    headline: "Cold Wash Weekend",
+    message: "Washing textiles on a cold cycle reduces washing machine operational carbon emissions by up to 90%.",
+    framework: "SALIENCE", // Framing Effect
+    potentialSavingsKg: 0.40,
+    triggerContext: { day },
+  };
+}
+
+function evaluateDigitalFasting(): BehavioralNudge | null {
+  const hour = new Date().getHours();
+  if (hour < 22) return null;
+  return {
+    id: "nudge_digital_fasting",
+    headline: "Digital Fasting",
+    message: "High-definition streaming relies on energy-intensive data centers. Read a book tonight to bank 100 grams of CO2e.",
+    framework: "SALIENCE", // Curiosity Gap
+    potentialSavingsKg: 0.10,
+    triggerContext: { hour },
   };
 }

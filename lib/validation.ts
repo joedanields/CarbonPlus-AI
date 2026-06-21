@@ -12,9 +12,9 @@
 import type {
   TransportMode,
   DietType,
-  ActivityLog,
   ActivityFormValues,
   UserSettings,
+  SimpleActionType,
 } from "./types";
 import { INPUT_LIMITS, DEFAULT_DAILY_BASELINE_KG, DEFAULT_WEEKLY_TARGET_KG } from "./constants";
 
@@ -26,6 +26,10 @@ const VALID_TRANSPORT_MODES: readonly TransportMode[] = [
 
 const VALID_DIET_TYPES: readonly DietType[] = [
   "vegan", "vegetarian", "mixed", "high_meat",
+] as const;
+
+const VALID_SIMPLE_ACTIONS: readonly SimpleActionType[] = [
+  "thermostat_drop", "cold_water_wash", "efficient_boiling", "digital_fasting",
 ] as const;
 
 // ─── Type Guards ──────────────────────────────────────────────────────────────
@@ -43,6 +47,11 @@ export function isValidDietType(value: unknown): value is DietType {
 /** Checks if a value is a finite, non-NaN number. */
 export function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+/** Checks if a value is a valid SimpleActionType. */
+export function isValidSimpleAction(value: unknown): value is SimpleActionType {
+  return typeof value === "string" && VALID_SIMPLE_ACTIONS.includes(value as SimpleActionType);
 }
 
 // ─── Input Sanitization ───────────────────────────────────────────────────────
@@ -110,6 +119,12 @@ export function validateFormValues(values: ActivityFormValues): ValidationResult
     errors.homeEnergyKwh = `Energy usage cannot exceed ${INPUT_LIMITS.HOME_ENERGY_KWH_MAX} kWh.`;
   }
 
+  if (values.simpleActions && !Array.isArray(values.simpleActions)) {
+    errors.simpleActions = "Invalid simple actions selection.";
+  } else if (values.simpleActions && !values.simpleActions.every(isValidSimpleAction)) {
+    errors.simpleActions = "One or more simple actions are invalid.";
+  }
+
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
@@ -171,6 +186,9 @@ function validateLogEntry(entry: unknown): ActivityLog | null {
             isFiniteNumber((b as Record<string, unknown>)["valueKg"]) &&
             isFiniteNumber((b as Record<string, unknown>)["percentage"])
         )
+      : [],
+    simpleActions: Array.isArray(log["simpleActions"])
+      ? (log["simpleActions"] as unknown[]).filter(isValidSimpleAction)
       : [],
   };
 }

@@ -18,6 +18,26 @@ import type { WeeklyCoachData } from "../../../lib/types";
 
 export const runtime = "edge";
 
+function isValidWeeklyData(data: unknown): data is WeeklyCoachData {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  if (typeof d.userId !== "string") return false;
+  if (typeof d.weekStartDate !== "string") return false;
+  if (typeof d.weekEndDate !== "string") return false;
+  if (!Array.isArray(d.dailyLogs)) return false;
+  if (!d.weeklyTotals || typeof d.weeklyTotals !== "object") return false;
+  if (typeof d.streak !== "number") return false;
+  if (typeof d.baselineFootprintKgPerDay !== "number") return false;
+  if (typeof d.weeklyBaselineKg !== "number") return false;
+  for (const log of d.dailyLogs) {
+    if (!log || typeof log !== "object") return false;
+    const l = log as Record<string, unknown>;
+    if (typeof l.date !== "string") return false;
+    if (typeof l.totalEmissionsKg !== "number") return false;
+  }
+  return true;
+}
+
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
@@ -100,10 +120,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   let weeklyData: WeeklyCoachData;
   try {
     const body = await request.json() as { weeklyData: unknown };
-    if (!body.weeklyData || typeof body.weeklyData !== "object") {
-      return NextResponse.json({ error: "Missing weeklyData." }, { status: 400 });
+    if (!isValidWeeklyData(body.weeklyData)) {
+      return NextResponse.json({ error: "Invalid weeklyData schema." }, { status: 400 });
     }
-    weeklyData = body.weeklyData as WeeklyCoachData;
+    weeklyData = body.weeklyData;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }

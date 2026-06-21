@@ -130,7 +130,7 @@ describe("validateStoredSettings", () => {
     };
     const result = validateStoredSettings(data);
     expect(result.dailyTargetKg).toBe(1); // INPUT_LIMITS.DAILY_TARGET_KG_MIN
-    expect(result.weeklyTargetKg).toBe(350); // INPUT_LIMITS.DAILY_TARGET_KG_MAX * 7
+    expect(result.weeklyTargetKg).toBe(700); // INPUT_LIMITS.DAILY_TARGET_KG_MAX * 7
     expect(result.persona).toBe("analytical");
     expect(result.onboardingCompleted).toBe(true);
   });
